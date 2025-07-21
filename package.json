@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "node api/proxy.js"
+    "start": "node api/proxy.js",
     "postinstall": "puppeteer install"
   },
   "dependencies": {
