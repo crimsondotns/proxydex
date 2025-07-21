@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "chrome-aws-lambda": "^10.1.0",
+    "chromedriver": "^138.0.3",
+    "puppeteer": "^24.14.0",
+    "puppeteer-core": "^10.4.0",
+    "selenium-webdriver": "^4.34.0"
+  }
+}
