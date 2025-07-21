@@ -4,7 +4,10 @@
   "main": "api/proxy.js",
   "scripts": {
     "start": "node api/proxy.js",
-    "postinstall": "node install-chrome.js"
+    "scripts": {
+  "start": "node api/proxy.js",
+  "postinstall": "node node_modules/puppeteer/install.js"
+}
   },
   "dependencies": {
     "puppeteer": "^24.14.0",
