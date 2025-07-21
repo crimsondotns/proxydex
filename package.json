@@ -1,6 +1,7 @@
 {
   "scripts": {
     "start": "node api/proxy.js"
+    "postinstall": "puppeteer install"
   },
   "dependencies": {
     "chrome-aws-lambda": "^10.1.0",
