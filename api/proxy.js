@@ -1,5 +1,7 @@
 const express = require('express');
-const puppeteer = require('puppeteer');
+const chromium = require('chrome-aws-lambda');
+const puppeteer = require('puppeteer-core');
+
 const app = express();
 
 app.get('/api/proxy', async (req, res) => {
@@ -9,10 +11,15 @@ app.get('/api/proxy', async (req, res) => {
     return res.status(400).json({ error: 'Missing url parameter' });
   }
 
+  let browser = null;
+
   try {
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath || '/usr/bin/chromium-browser',
+      headless: chromium.headless,
+      ignoreHTTPSErrors: true,
     });
 
     const page = await browser.newPage();
@@ -39,12 +46,13 @@ app.get('/api/proxy', async (req, res) => {
     res.status(200).json(pairDetails || { error: 'pairDetails not found' });
 
   } catch (err) {
+    if (browser) await browser.close();
     console.error('Proxy error:', err.message);
     res.status(500).json({ error: 'Proxy failed', message: err.message });
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
