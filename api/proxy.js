@@ -1,38 +1,50 @@
-const chromium = require('chrome-aws-lambda');
-const puppeteer = require('puppeteer-core');
+const express = require('express');
+const puppeteer = require('puppeteer');
+const app = express();
 
-module.exports = async (req, res) => {
-  const { url } = req.query;
-  if (!url) {
-    res.status(400).json({ error: 'Missing url parameter' });
-    return;
+app.get('/api/proxy', async (req, res) => {
+  const targetUrl = req.query.url;
+
+  if (!targetUrl) {
+    return res.status(400).json({ error: 'Missing url parameter' });
   }
 
-  const browser = await puppeteer.launch({
-    args: chromium.args,
-    executablePath: await chromium.executablePath,
-    headless: chromium.headless,
-  });
-  const page = await browser.newPage();
-  await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-  await page.goto(url, { waitUntil: 'networkidle2' });
+  try {
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
 
-  let pairDetails = await page.evaluate(() => {
-    try {
-      const pd = window.__SERVER_DATA?.route?.data?.pairDetails;
-      if (!pd) return null;
-      return {
-        schemaVersion: pd.schemaVersion,
-        gp: pd.gp ?? null,
-        cg: pd.cg ?? null,
-        holdersCount: pd.holders?.count ?? null,
-        holdersTotalSupply: pd.holders?.totalSupply ?? null
-      };
-    } catch (e) {
-      return null;
-    }
-  });
+    const page = await browser.newPage();
+    await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
 
-  await browser.close();
-  res.status(200).json(pairDetails);
-};
+    // Extract pairDetails from window.__SERVER_DATA
+    const pairDetails = await page.evaluate(() => {
+      try {
+        const pd = window.__SERVER_DATA?.route?.data?.pairDetails;
+        if (!pd) return null;
+        return {
+          schemaVersion: pd.schemaVersion,
+          gp: pd.gp ?? null,
+          cg: pd.cg ?? null,
+          holdersCount: pd.holders?.count ?? null,
+          holdersTotalSupply: pd.holders?.totalSupply ?? null
+        };
+      } catch (e) {
+        return null;
+      }
+    });
+
+    await browser.close();
+    res.status(200).json(pairDetails || { error: 'pairDetails not found' });
+
+  } catch (err) {
+    console.error('Proxy error:', err.message);
+    res.status(500).json({ error: 'Proxy failed', message: err.message });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
