@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/proxy.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "build": {
+    "env": {
+      "NPM_INSTALL_FLAGS": "--legacy-peer-deps"
+    }
+  }
+}
